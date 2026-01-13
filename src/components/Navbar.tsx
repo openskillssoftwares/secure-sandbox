@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X } from "lucide-react";
+import { Shield, Menu, X, TextCursor } from "lucide-react";
 import { useState } from "react";
 
 const Navbar = () => {
@@ -13,16 +13,16 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
-              <Shield className="h-8 w-8 text-cyan-400 transition-all duration-300 group-hover:text-cyan-300" />
+              <TextCursor className="h-4 w-4 text-cyan-400 transition-all duration-300 group-hover:text-cyan-300" />
               <div className="absolute inset-0 blur-lg bg-cyan-500/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
-              CyberLabs
+              _PenTest Me!
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-12">
             <Link to="/" className="text-muted-foreground hover:text-cyan-400 transition-colors font-medium">
               Home
             </Link>
@@ -38,17 +38,20 @@ const Navbar = () => {
             <Link to="/blog" className="text-muted-foreground hover:text-cyan-400 transition-colors font-medium">
               Blog
             </Link>
+            <Link to="/about" className="text-muted-foreground hover:text-cyan-400 transition-colors font-medium">
+            About
+            </Link>
           </div>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-6">
             <Link to="/login">
-              <Button variant="cyber-ghost" size="sm">
+              <Button variant="cyber-ghost" size="lg">
                 Log In
               </Button>
             </Link>
             <Link to="/signup">
-              <Button variant="cyber" size="sm">
+              <Button variant="cyber" size="lg">
                 Start Hacking
               </Button>
             </Link>

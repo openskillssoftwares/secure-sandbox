@@ -93,7 +93,8 @@ const HeroSection = () => {
               <p className="text-muted-foreground mt-2">[*] Connecting to isolated sandbox...</p>
               <p className="text-cyan-400 mt-1">[+] Connection established!</p>
               <p className="text-muted-foreground mt-1">[*] Target: vulnerable-app.lab</p>
-              <p className="text-green-400 mt-2">$ <span className="text-foreground typing-effect inline-block">sqlmap -u "http://target/search?q=test"</span></p>
+              <p className="text-green-400 mt-2">$ <span className="text-foreground typing-effect inline-block">sqlmap -u "http://labs.pentest-me/sql-injection/search?q=test"</span></p>
+              <p className="text-cyan-400 mt-1 typing-effect-delayed">[+] <span className="text-foreground">Vulnerability Identified</span></p>
             </div>
           </div>
         </div>
