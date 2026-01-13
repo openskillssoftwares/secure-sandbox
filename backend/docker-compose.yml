@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Secure PostgreSQL Database
+  secure-db:
+    image: postgres:16-alpine
+    container_name: pentest-secure-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secure_password_change_me
+      POSTGRES_DB: secure_pentest_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - secure-db-data:/var/lib/postgresql/data
+      - ./database/schema-secure.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - pentest-network
+    restart: unless-stopped
+
+  # Vulnerable PostgreSQL Database
+  vulnerable-db:
+    image: postgres:16-alpine
+    container_name: pentest-vulnerable-db
+    environment:
+      POSTGRES_USER: vuln_user
+      POSTGRES_PASSWORD: vuln_password
+      POSTGRES_DB: vulnerable_practice_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - vulnerable-db-data:/var/lib/postgresql/data
+      - ./database/schema-vulnerable.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - pentest-network
+    restart: unless-stopped
+
+  # Redis for session management
+  redis:
+    image: redis:7-alpine
+    container_name: pentest-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - pentest-network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build: .
+    container_name: pentest-backend
+    environment:
+      NODE_ENV: production
+      DB_HOST: secure-db
+      DB_PORT: 5432
+      VULN_DB_HOST: vulnerable-db
+      VULN_DB_PORT: 5432
+      REDIS_HOST: redis
+    ports:
+      - "5000:5000"
+    depends_on:
+      - secure-db
+      - vulnerable-db
+      - redis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - pentest-network
+      - pentest-sandbox-network
+    restart: unless-stopped
+
+volumes:
+  secure-db-data:
+  vulnerable-db-data:
+  redis-data:
+
+networks:
+  pentest-network:
+    driver: bridge
+  pentest-sandbox-network:
+    driver: bridge
+    internal: true  # Isolated network for sandboxes

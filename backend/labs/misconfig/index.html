@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Misconfiguration Lab</title>
+    <style>
+        body { background: #0a0e27; color: #00d9ff; font-family: 'Courier New', monospace; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: #00d9ff; text-shadow: 0 0 10px #00d9ff; }
+        .level { background: #1a1f3a; padding: 20px; margin: 20px 0; border-radius: 10px; border: 1px solid #00d9ff; }
+        .level h2 { color: #ff3366; }
+        button { background: #1a1f3a; color: #00d9ff; border: 1px solid #00d9ff; padding: 10px 20px; cursor: pointer; margin: 5px; }
+        button:hover { background: #00d9ff; color: #0a0e27; }
+        .hint { color: #ffaa00; font-size: 0.9em; margin-top: 10px; }
+        .result { margin-top: 10px; padding: 15px; border-radius: 5px; background: #1a1f3a; border: 1px solid #00d9ff; }
+        pre { color: #00ff00; }
+        a { color: #00d9ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Security Misconfiguration Lab</h1>
+        <p>Find and exploit common security misconfigurations!</p>
+        
+        <div class="level">
+            <h2>EASY: Default Credentials & Exposed Files</h2>
+            <p>The server exposes sensitive configuration files.</p>
+            
+            <button onclick="window.open('/.env', '_blank')">View .env File</button>
+            <button onclick="window.open('/config/', '_blank')">Browse Config Directory</button>
+            
+            <div class="hint">Hint: Check /.env, /config/, and other common config files</div>
+            <div class="hint">Flag in .env file: FLAG{d3f4ult_cr3d3nt14ls}</div>
+        </div>
+        
+        <div class="level">
+            <h2>MEDIUM: Debug Mode Enabled</h2>
+            <p>Application running in debug mode exposes sensitive information.</p>
+            
+            <button onclick="triggerError()">Trigger Error</button>
+            <button onclick="window.open('/config/credentials.json', '_blank')">Check Credentials</button>
+            
+            <div id="med-result" class="result" style="display:none;"></div>
+            <div class="hint">Hint: Debug mode shows detailed error messages and file paths. Check /config/credentials.json</div>
+        </div>
+        
+        <div class="level">
+            <h2>HARD: CORS Misconfiguration</h2>
+            <p>CORS allows any origin with credentials, enabling data theft.</p>
+            
+            <button onclick="testCORS()">Test CORS</button>
+            <button onclick="window.open('/.git/', '_blank')">Check .git Directory</button>
+            
+            <div id="hard-result" class="result" style="display:none;"></div>
+            <div class="hint">Hint: Access-Control-Allow-Origin: * with credentials enabled. Check exposed .git directory</div>
+        </div>
+        
+        <div class="level">
+            <h2>IMPOSSIBLE: Multi-Service Chain Attack</h2>
+            <p>Combine multiple misconfigurations to access admin panel.</p>
+            
+            <button onclick="window.open('/admin/', '_blank')">Try Admin Access</button>
+            <button onclick="window.open('/admin/dashboard.html', '_blank')">Direct Dashboard Access</button>
+            
+            <div class="hint">Hint: Admin panel has no authentication. Directory listing enabled. Check /admin/dashboard.html</div>
+            <div class="hint">Final Flag in admin dashboard: FLAG{mult1_s3rv1c3_ch41n}</div>
+        </div>
+        
+        <div class="level">
+            <h2>Server Information</h2>
+            <p>Server headers expose version information:</p>
+            <pre>X-Powered-By: Nginx/1.21.0 (Ubuntu)
+Server: Production-Server-001
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true</pre>
+            <div class="hint">All these headers are security risks!</div>
+        </div>
+    </div>
+    
+    <script>
+        function triggerError() {
+            fetch('/nonexistent-endpoint')
+                .then(r => r.text())
+                .then(text => {
+                    document.getElementById('med-result').style.display = 'block';
+                    document.getElementById('med-result').innerHTML = '<pre>' + text + '</pre>';
+                })
+                .catch(e => {
+                    document.getElementById('med-result').style.display = 'block';
+                    document.getElementById('med-result').innerHTML = 'Error: ' + e.message;
+                });
+        }
+        
+        function testCORS() {
+            const result = document.getElementById('hard-result');
+            result.style.display = 'block';
+            
+            const headers = [
+                'Access-Control-Allow-Origin: *',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS'
+            ];
+            
+            result.innerHTML = '<strong>CORS Headers:</strong><br>' + 
+                headers.join('<br>') + 
+                '<br><br>This configuration allows ANY website to make authenticated requests!' +
+                '<br><br>Check /.git/secret.txt for flag';
+        }
+    </script>
+</body>
+</html>
