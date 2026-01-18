@@ -1,101 +1,249 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
-interface User {
+interface UserProfile {
   id: string;
-  email: string;
   username: string;
-  fullName?: string;
-  subscriptionPlan: string;
-  subscriptionStatus: string;
-  emailVerified: boolean;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  website: string | null;
+  location: string | null;
+  github_username: string | null;
+  twitter_username: string | null;
+}
+
+interface UserRole {
+  role: 'user' | 'moderator' | 'writer' | 'admin';
+}
+
+interface User extends SupabaseUser {
+  profile?: UserProfile;
+  roles?: UserRole[];
 }
 
 interface AuthContextType {
   user: User | null;
+  profile: UserProfile | null;
+  roles: string[];
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; username: string; password: string; fullName?: string }) => Promise<void>;
-  logout: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, username: string, fullName?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithGithub: () => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
+  hasRole: (role: string) => boolean;
+  isAdmin: boolean;
+  isWriter: boolean;
+  isModerator: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (rolesError) throw rolesError;
+
+      setProfile(profileData);
+      setRoles(rolesData.map((r) => r.role));
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
   useEffect(() => {
-    // Check if user is logged in
-    const checkAuth = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        try {
-          const response = await authAPI.getCurrentUser();
-          setUser(response.data.user);
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-        }
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user as User);
+        fetchUserProfile(session.user.id);
       }
       setLoading(false);
-    };
+    });
 
-    checkAuth();
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user as User);
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setRoles([]);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
-      const response = await authAPI.login({ email, password });
-      const { accessToken, refreshToken, user } = response.data;
-      
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      setUser(user);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
-    }
-  };
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-  const register = async (data: { email: string; username: string; password: string; fullName?: string }) => {
-    try {
-      await authAPI.register(data);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
-    }
-  };
+      if (error) throw error;
 
-  const logout = async () => {
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        await authAPI.logout(refreshToken);
+      if (data.user) {
+        setUser(data.user as User);
+        await fetchUserProfile(data.user.id);
       }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw new Error(error.message || 'Failed to login');
+    }
+  };
+
+  const signUp = async (email: string, password: string, username: string, fullName?: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        setUser(data.user as User);
+        // Profile will be created automatically by the database trigger
+        await fetchUserProfile(data.user.id);
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      throw new Error(error.message || 'Failed to register');
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      throw new Error(error.message || 'Failed to login with Google');
+    }
+  };
+
+  const signInWithGithub = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('GitHub login error:', error);
+      throw new Error(error.message || 'Failed to login with GitHub');
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
       setUser(null);
+      setProfile(null);
+      setRoles([]);
+      
+      // Redirect to login page after successful logout
+      navigate('/login');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      throw new Error(error.message || 'Failed to logout');
+    }
+  };
+
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) throw new Error('No user logged in');
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Refresh profile data
+      await fetchUserProfile(user.id);
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      throw new Error(error.message || 'Failed to update profile');
     }
   };
 
   const refreshUser = async () => {
-    try {
-      const response = await authAPI.getCurrentUser();
-      setUser(response.data.user);
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
-    }
+    if (!user) return;
+    await fetchUserProfile(user.id);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const hasRole = (role: string): boolean => {
+    return roles.includes(role);
+  };
+
+  const value: AuthContextType = {
+    user,
+    profile,
+    roles,
+    loading,
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signInWithGithub,
+    signOut,
+    updateProfile,
+    refreshUser,
+    hasRole,
+    isAdmin: roles.includes('admin'),
+    isWriter: roles.includes('writer') || roles.includes('admin'),
+    isModerator: roles.includes('moderator') || roles.includes('admin'),
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

@@ -1,10 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Menu, X, TextCursor } from "lucide-react";
+import { Shield, Menu, X, TextCursor, User } from "lucide-react";
+import DecryptedText from "./DecryptedText";
+import NotificationBell from "./NotificationBell";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
@@ -16,7 +20,7 @@ const Navbar = () => {
               <TextCursor className="h-4 w-4 text-cyan-400 transition-all duration-300 group-hover:text-cyan-300" />
               <div className="absolute inset-0 blur-lg bg-cyan-500/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent typing-effect first-letter: inline-block">
               _PenTest Me!
             </span>
           </Link>
@@ -45,16 +49,33 @@ const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/login">
-              <Button variant="cyber-ghost" size="lg">
-                Log In
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button variant="cyber" size="lg">
-                Start Hacking
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <NotificationBell />
+                <Link to="/dashboard">
+                  <Button variant="cyber-ghost" size="lg">
+                    <User className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="cyber-outline" size="lg" onClick={() => signOut()}>
+                  Log Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="cyber-ghost" size="lg">
+                    Log In
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button variant="cyber" size="lg">
+                    Start Hacking
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,16 +104,31 @@ const Navbar = () => {
                 Blog
               </Link>
               <div className="flex gap-4 pt-4 border-t border-border/50">
-                <Link to="/login" className="flex-1">
-                  <Button variant="cyber-outline" className="w-full">
-                    Log In
-                  </Button>
-                </Link>
-                <Link to="/signup" className="flex-1">
-                  <Button variant="cyber" className="w-full">
-                    Sign Up
-                  </Button>
-                </Link>
+                {user ? (
+                  <>
+                    <Link to="/dashboard" className="flex-1">
+                      <Button variant="cyber-outline" className="w-full">
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button variant="cyber" className="flex-1" onClick={() => signOut()}>
+                      Log Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="flex-1">
+                      <Button variant="cyber-outline" className="w-full">
+                        Log In
+                      </Button>
+                    </Link>
+                    <Link to="/signup" className="flex-1">
+                      <Button variant="cyber" className="w-full">
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
