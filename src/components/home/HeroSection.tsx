@@ -1,16 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Terminal, ArrowRight, Shield, Lock, Zap } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import DecryptedText from "../DecryptedText";
+import LetterGlitch from "../LetterGlitch";
 
 const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBg})` }}
-      >
+      {/* LetterGlitch Background */}
+      <div className="absolute inset-0">
+        <LetterGlitch
+          glitchColors={['#2b4539', '#61dca3', '#61b3dc']}
+          glitchSpeed={50}
+          centerVignette={true}
+          outerVignette={false}
+          smooth={true}
+          characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$&*()-_+=/[]{};:<>.,0123456789"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
       </div>
 
@@ -26,19 +32,19 @@ const HeroSection = () => {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full px-4 py-2 mb-8 animate-fade-in">
           <Terminal className="h-4 w-4 text-cyan-400" />
-          <span className="text-cyan-400 text-sm font-medium">Practice Real-World Hacking Skills</span>
+          <span className="text-cyan-400 text-sm font-medium"><DecryptedText text="Practice Real-World Hacking Skills"/> </span>
         </div>
 
         {/* Main Heading */}
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-          <span className="text-foreground">Master </span>
+          <span className="text-foreground"><DecryptedText text="Master" /></span>
           <span className="bg-gradient-to-r from-cyan-400 via-cyan-300 to-green-400 bg-clip-text text-transparent">
-            Ethical Hacking
+            <DecryptedText text=" Ethical Hacking"/>
           </span>
           <br />
-          <span className="text-foreground">in a </span>
+          <span className="text-foreground"><DecryptedText text="in a"/> </span>
           <span className="bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
-            Safe Sandbox
+            <DecryptedText text="Safe Sandbox"/>
           </span>
         </h1>
 

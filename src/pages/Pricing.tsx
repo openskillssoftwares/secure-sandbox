@@ -30,7 +30,7 @@ const plans = [
   },
   {
     name: "Starter",
-    price: "₹499",
+    price: "₹199",
     period: "per month",
     description: "Perfect for serious learners",
     icon: Sparkles,
@@ -51,7 +51,7 @@ const plans = [
   },
   {
     name: "Unlimited",
-    price: "₹1,499",
+    price: "₹499",
     period: "per month",
     description: "For professional pentesters",
     icon: Crown,
@@ -165,10 +165,21 @@ const Pricing = () => {
           </div>
 
           {/* Trust Badge */}
-          <div className="text-center mb-20">
-            <p className="text-muted-foreground">
-              🔒 Secured by Razorpay • Cancel anytime • 7-day money-back guarantee
-            </p>
+          <div className="flex justify-center mb-10">
+            <a 
+              href="https://razorpay.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <img
+                referrerPolicy="origin"
+                src="https://badges.razorpay.com/badge-light.png"
+                style={{ height: '45px', width: '95px' }}
+                alt="Razorpay | Payment Gateway | Neobank"
+                className="mx-auto"
+              />
+            </a>
           </div>
 
           {/* FAQs */}

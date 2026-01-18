@@ -174,6 +174,9 @@ export async function requireEmailVerification(
   }
 }
 
+// Alias for authenticateToken
+export const authMiddleware = authenticateToken;
+
 export default {
   hashPassword,
   comparePassword,
@@ -184,6 +187,7 @@ export default {
   generateRandomToken,
   generateVerificationCode,
   authenticateToken,
+  authMiddleware,
   requireSubscription,
   requireEmailVerification,
 };
